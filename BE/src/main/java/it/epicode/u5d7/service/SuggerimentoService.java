@@ -14,8 +14,9 @@ import it.epicode.u5d7.payload.MessaggioLlm;
 import it.epicode.u5d7.payload.SuggerimentoResponse;
 
 /**
- * Chiede all'IA un messaggio per continuare la conversazione. Il suggerimento viene
- * solo restituito al client, che decide se inviarlo: qui NON si salva nulla a DB.
+ * Consegna, punto 2: si puo' chiedere all'IA di proporre un messaggio per continuare
+ * la conversazione e la risposta dell'IA NON deve essere salvata nel DB.
+ * Il suggerimento viene solo restituito al client, che decide se inviarlo: qui non c'e' nessuna save().
  * Senza @Transactional: la lettura della cronologia e' una transazione breve di
  * MessaggioService, mentre la chiamata all'LLM resta fuori da qualsiasi transazione.
  */

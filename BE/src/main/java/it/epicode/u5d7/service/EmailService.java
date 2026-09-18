@@ -58,7 +58,8 @@ public class EmailService {
 	}
 
 	/**
-	 * Email HTML con le statistiche. Le variabili passate al Context finiscono nel
+	 * Consegna, punto 3: email HTML con le statistiche, generata dal template Thymeleaf.
+	 * Le variabili passate al Context finiscono nel
 	 * template tramite th:text, che fa l'escape HTML: lo username non puo' iniettare markup.
 	 */
 	public void inviaStatistiche(String email, String username, StatisticheResponse stat) {

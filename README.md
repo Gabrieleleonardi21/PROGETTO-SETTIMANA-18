@@ -4,6 +4,16 @@ Chat 1-a-1 con Spring Boot (REST + WebSocket/STOMP, login JWT) e front-end React
 Registrazione con conferma via email, login anche con codice via email, suggerimento IA del prossimo
 messaggio e statistiche personali spedite via email con un template Thymeleaf.
 
+## Consegna → dove sta nel codice
+
+| Punto della consegna | Backend | Frontend |
+|---|---|---|
+| 1. Chat fra utenti loggati, messaggi in diretta via WS | `MessaggioWsController`, `NotificatoreWs`, `WebSocketConfig` | `services/stompClient.js`, `pages/Chat.jsx` |
+| 2. L'IA propone un messaggio per continuare; la risposta **non** va a DB | `SuggerimentoService`, `ClientLlm`, `ChatController` (`POST /api/chat/{id}/suggerimento`) | bottone ✨ in `components/Conversazione.jsx` |
+| 3. Statistiche (inviati, ricevuti, chat aperte) via email con Thymeleaf | `StatisticheService`, `EmailService.inviaStatistiche`, `templates/email/statistiche.html` | `components/Statistiche.jsx` |
+
+Prerequisito degli utenti "loggati": registrazione con conferma via email e login con password o codice via email (vedi sotto).
+
 ## Come funziona
 
 - Ogni utente registrato vede l'elenco degli altri utenti e apre una chat cliccando su una persona.

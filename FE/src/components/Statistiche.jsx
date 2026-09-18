@@ -4,7 +4,7 @@ import Avviso from './Avviso.jsx'
 import Icona from './Icona.jsx'
 
 /**
- * Pannello con le statistiche personali (GET /api/statistiche) e il bottone
+ * Consegna, punto 3: pannello con le statistiche personali (GET /api/statistiche) e il bottone
  * che chiede al backend di spedirle via email con il template Thymeleaf.
  */
 function Statistiche({ onChiudi }) {

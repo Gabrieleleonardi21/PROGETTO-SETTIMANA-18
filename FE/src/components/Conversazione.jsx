@@ -10,7 +10,7 @@ import Icona from './Icona.jsx'
  * L'invio passa dal canale WebSocket (SEND su /app/messaggi). Nessun inserimento
  * "ottimistico": il messaggio compare quando torna l'eco del server, con id e
  * sentAt decisi dal backend. Il mittente non viene inviato: lo mette il server dal principal.
- * Il bottone "Suggerisci" chiede all'IA un testo e lo mette nel campo: l'utente puo'
+ * Consegna, punto 2: il bottone "Suggerisci" chiede all'IA un testo e lo mette nel campo: l'utente puo'
  * modificarlo o scartarlo, e nulla viene salvato finche' non preme Invia.
  */
 function Conversazione({ chat, messaggi, meId, onIndietro }) {

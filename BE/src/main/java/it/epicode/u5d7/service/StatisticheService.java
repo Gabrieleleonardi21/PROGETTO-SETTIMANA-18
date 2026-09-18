@@ -8,7 +8,10 @@ import it.epicode.u5d7.payload.StatisticheResponse;
 import it.epicode.u5d7.repository.ChatRepository;
 import it.epicode.u5d7.repository.MessaggioRepository;
 
-/** Statistiche personali (messaggi inviati/ricevuti, chat aperte) e loro invio via email. */
+/**
+ * Consegna, punto 3: l'utente puo' richiedere le proprie statistiche (n. messaggi inviati,
+ * n. messaggi ricevuti, n. chat aperte) e riceverle via email con un template Thymeleaf.
+ */
 @Service
 public class StatisticheService {
 

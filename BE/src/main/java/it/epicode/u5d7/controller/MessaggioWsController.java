@@ -13,6 +13,7 @@ import it.epicode.u5d7.payload.NuovoMessaggioRequest;
 import it.epicode.u5d7.service.MessaggioService;
 
 /**
+ * Consegna, punto 1: chat fra utenti loggati con arrivo dei messaggi in diretta tramite WebSocket.
  * Invio di un messaggio dal canale WebSocket: il client fa SEND su /app/messaggi.
  * @Controller e non @RestController: qui non ci sono risposte HTTP.
  */
