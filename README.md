@@ -46,11 +46,14 @@ Back-end (porta 3001) – richiede PostgreSQL locale e il file `BE/env.propertie
 ```properties
 DB_PASSWORD=...
 JWT_SECRET=una-stringa-di-almeno-32-caratteri
-# Gmail: indirizzo e app password (Google Account > Sicurezza > Password per le app)
-MAIL_USERNAME=tuo.indirizzo@gmail.com
-MAIL_PASSWORD=app-password-16-caratteri
-# OpenRouter, per il suggerimento IA
-OPENROUTER_API_KEY=...
+```
+
+Email e IA si configurano con **variabili d'ambiente** (hanno precedenza sul file; se mancano l'avvio fallisce subito):
+
+```bash
+export MAIL_USERNAME=tuo.indirizzo@gmail.com      # mittente Gmail
+export MAIL_PASSWORD=app-password-16-caratteri    # Google Account > Sicurezza > Password per le app
+export OPENROUTER_API_KEY=sk-or-...               # chiave OpenRouter per il suggerimento IA
 ```
 
 Se il DB esiste già da prima, gli utenti vecchi risultano non attivi: `UPDATE utenti SET is_active = true;`
