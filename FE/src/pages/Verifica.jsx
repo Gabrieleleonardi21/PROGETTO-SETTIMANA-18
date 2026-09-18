@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Avviso from '../components/Avviso.jsx'
+import Icona from '../components/Icona.jsx'
 import { post } from '../services/api.js'
 
 /** Pagina aperta dal link della mail: legge email e code dalla query string e attiva l'account. */
@@ -25,6 +26,7 @@ function Verifica() {
 
   return (
     <main className="card">
+      <div className="logo"><Icona nome="chat" dimensione={40} /><span>Chat</span></div>
       <h1>Verifica account</h1>
       <Avviso testo={esito} tipo="ok" />
       <Avviso testo={erroreLink} />

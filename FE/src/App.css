@@ -1,47 +1,135 @@
-/* Stile minimale: system-ui, due colonne, bolle dei messaggi */
+/* ============================================================
+   Palette e basi. Colori ispirati a WhatsApp Web, tutti in variabili
+   cosi' cambiando qui si ritinge tutta l'app.
+   ============================================================ */
+:root {
+  --verde-scuro: #008069;
+  --verde: #00a884;
+  --verde-chiaro: #d9fdd3;
+  --sfondo: #efeae2;
+  --sfondo-pannello: #f0f2f5;
+  --bianco: #fff;
+  --testo: #111b21;
+  --testo-tenue: #667781;
+  --bordo: #e9edef;
+  --azzurro: #53bdeb;
+  --errore-sfondo: #fde8e8;
+  --errore-testo: #b42318;
+  --ok-sfondo: #e3f7e9;
+  --ok-testo: #1b7a3d;
+  --ombra: 0 1px 2px rgba(0, 0, 0, 0.12);
+  --raggio: 12px;
+}
+
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; background: #e5ddd5; color: #222; }
-button { font: inherit; cursor: pointer; border: 0; border-radius: 6px; padding: 0.5rem 1rem; background: #128c7e; color: #fff; }
-button:disabled { opacity: 0.6; cursor: default; }
-button.secondario { background: #ddd; color: #222; }
-input { font: inherit; padding: 0.5rem; border: 1px solid #bbb; border-radius: 6px; }
+html, body, #root { height: 100%; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--sfondo-pannello); color: var(--testo); }
+h1, h2 { margin: 0 0 1rem; font-weight: 600; }
+a { color: var(--verde-scuro); }
 
-/* Login e registrazione */
-.card { max-width: 380px; margin: 4rem auto; padding: 2rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.card form { display: flex; flex-direction: column; gap: 0.75rem; }
-.card label { display: flex; flex-direction: column; gap: 0.25rem; }
-.avviso { padding: 0.5rem; border-radius: 6px; }
-.avviso.errore { background: #fde2e2; color: #900; }
-.avviso.ok { background: #e2f7e2; color: #060; }
-.nota { text-align: center; color: #666; margin-top: 2rem; }
+/* ---------- Controlli ---------- */
+button { font: inherit; cursor: pointer; border: 0; border-radius: 24px; padding: 0.6rem 1.25rem; background: var(--verde); color: var(--bianco); font-weight: 500; transition: background 0.15s; }
+button:hover { background: var(--verde-scuro); }
+button:disabled { opacity: 0.55; cursor: default; }
+button.secondario { background: var(--bordo); color: var(--testo); }
+button.secondario:hover { background: #d9dee2; }
+/* Bottoni a sola icona (header, barra di scrittura) */
+button.icona { background: none; color: inherit; padding: 0.4rem; border-radius: 50%; display: inline-flex; line-height: 0; }
+button.icona:hover { background: rgba(0, 0, 0, 0.08); }
+/* Bottone rotondo pieno (invia) */
+button.tondo { border-radius: 50%; width: 42px; height: 42px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+/* Animazione mentre si aspetta l'IA */
+button.pulsante { animation: pulsa 1s ease-in-out infinite; }
+@keyframes pulsa { 50% { opacity: 0.35; } }
 
-/* Layout chat */
-.app { display: flex; height: 100vh; }
-.sidebar { width: 260px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; }
-.sidebar header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #075e54; color: #fff; }
-.sidebar ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
-.contatto { width: 100%; text-align: left; background: none; color: #222; border-radius: 0; padding: 0.75rem 1rem; border-bottom: 1px solid #eee; }
-.contatto:hover { background: #f5f5f5; }
-.contatto.attivo { background: #e8f5f3; font-weight: bold; }
-.colonna { flex: 1; display: flex; flex-direction: column; }
-.intestazione { padding: 0.75rem 1rem; background: #ededed; border-bottom: 1px solid #ccc; font-weight: bold; }
-.messaggi { list-style: none; margin: 0; padding: 1rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem; }
-.bolla { align-self: flex-start; max-width: 70%; background: #fff; padding: 0.4rem 0.7rem; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-.bolla.mia { align-self: flex-end; background: #dcf8c6; }
-.bolla small { align-self: flex-end; color: #777; font-size: 0.7rem; margin-top: 0.15rem; }
-.stato { color: #34b7f1; }
-.invio { display: flex; gap: 0.5rem; padding: 0.75rem; background: #f0f0f0; }
-.invio input { flex: 1; }
+input { font: inherit; padding: 0.65rem 0.85rem; border: 1px solid #cfd6da; border-radius: 8px; background: var(--bianco); color: var(--testo); }
+input:focus { outline: 2px solid var(--verde); outline-offset: -1px; border-color: transparent; }
+
+/* ---------- Avvisi ---------- */
+.avviso { padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.9rem; margin: 0.5rem 0; }
+.avviso.errore { background: var(--errore-sfondo); color: var(--errore-testo); }
+.avviso.ok { background: var(--ok-sfondo); color: var(--ok-testo); }
+.nota { text-align: center; color: var(--testo-tenue); margin: 1.5rem 1rem; font-size: 0.95rem; }
+
+/* ---------- Avatar ---------- */
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--bianco); font-weight: 600; font-size: 1.05rem; flex-shrink: 0; }
+.avatar.grande { width: 64px; height: 64px; font-size: 1.6rem; }
+
+/* ============================================================
+   Pagine di accesso (login, registrazione, verifica): banda verde
+   in alto e card centrata, come WhatsApp Web
+   ============================================================ */
+.card { position: relative; max-width: 400px; margin: 4rem auto; padding: 2rem; background: var(--bianco); border-radius: var(--raggio); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); }
+.card::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 220px; background: var(--verde-scuro); z-index: -1; }
+.card form { display: flex; flex-direction: column; gap: 0.85rem; }
+.card label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; color: var(--testo-tenue); }
+.card p { color: var(--testo-tenue); font-size: 0.95rem; }
+.logo { display: flex; align-items: center; gap: 0.5rem; color: var(--verde-scuro); font-weight: 700; font-size: 1.4rem; margin-bottom: 1.25rem; }
 
 /* Tab del login (password / codice via email) */
-.tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-.tabs button { flex: 1; background: #eee; color: #222; }
-.tabs button.attivo { background: #128c7e; color: #fff; }
+.tabs { display: flex; margin-bottom: 1.25rem; border-bottom: 2px solid var(--bordo); }
+.tabs button { flex: 1; background: none; color: var(--testo-tenue); border-radius: 0; padding: 0.6rem 0; margin-bottom: -2px; border-bottom: 2px solid transparent; }
+.tabs button:hover { background: none; color: var(--testo); }
+.tabs button.attivo { color: var(--verde-scuro); border-bottom-color: var(--verde-scuro); }
 
-/* Gruppo di bottoni affiancati (sidebar, statistiche) */
-.azioni { display: flex; gap: 0.5rem; }
+/* ============================================================
+   Layout chat: lista a sinistra, conversazione a destra
+   ============================================================ */
+.app { display: flex; height: 100%; max-width: 1400px; margin: 0 auto; background: var(--bianco); box-shadow: var(--ombra); }
+.sidebar { width: 340px; border-right: 1px solid var(--bordo); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar header, .intestazione { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; min-height: 60px; background: var(--sfondo-pannello); border-bottom: 1px solid var(--bordo); }
+.sidebar header strong, .intestazione strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.sidebar .avviso { margin: 0.5rem; }
+.azioni { display: flex; gap: 0.25rem; color: #54656f; }
 
-/* Riquadro statistiche: etichetta a sinistra, valore a destra */
-.statistiche { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem 1rem; margin: 1rem 0; }
-.statistiche dd { margin: 0; font-weight: bold; }
-.colonna .card { margin: 2rem auto; }
+/* Contatto nella lista */
+.contatto { width: 100%; display: flex; align-items: center; gap: 0.85rem; text-align: left; background: none; color: var(--testo); border-radius: 0; padding: 0.7rem 1rem; border-bottom: 1px solid var(--bordo); font-weight: 400; font-size: 1rem; }
+.contatto:hover { background: var(--sfondo-pannello); }
+.contatto.attivo { background: var(--bordo); }
+
+/* Colonna destra */
+.colonna { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--sfondo); }
+/* Stato vuoto: nessuna chat aperta */
+.vuoto { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--testo-tenue); background: var(--sfondo-pannello); text-align: center; padding: 2rem; }
+.vuoto h2 { color: var(--testo); margin-top: 1rem; }
+
+/* Messaggi: sfondo con una leggera trama a puntini, senza immagini esterne */
+.messaggi { list-style: none; margin: 0; padding: 1rem 4%; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.3rem; background-image: radial-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px); background-size: 18px 18px; }
+.bolla { position: relative; align-self: flex-start; max-width: 65%; background: var(--bianco); padding: 0.4rem 0.6rem 0.3rem; border-radius: 8px; border-top-left-radius: 0; box-shadow: var(--ombra); display: flex; flex-direction: column; }
+.bolla.mia { align-self: flex-end; background: var(--verde-chiaro); border-top-left-radius: 8px; border-top-right-radius: 0; }
+/* "Codina" della bolla: un triangolo disegnato con i bordi */
+.bolla::before { content: ""; position: absolute; top: 0; left: -8px; border: 8px solid transparent; border-top-color: var(--bianco); border-right-color: var(--bianco); border-width: 6px 8px; }
+.bolla.mia::before { left: auto; right: -8px; border-top-color: var(--verde-chiaro); border-right-color: transparent; border-left-color: var(--verde-chiaro); }
+.bolla .testo { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.35; }
+.bolla small { align-self: flex-end; color: var(--testo-tenue); font-size: 0.7rem; margin-top: 0.15rem; margin-left: 0.75rem; }
+.stato { color: var(--testo-tenue); }
+.stato.consegnato { color: var(--azzurro); }
+
+/* Barra di scrittura */
+.invio { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; background: var(--sfondo-pannello); color: #54656f; }
+.invio input { flex: 1; border-radius: 24px; border-color: transparent; min-width: 0; }
+.colonna > .avviso { margin: 0.5rem 1rem; }
+
+/* Pannello statistiche */
+.pannello { flex: 1; padding: 1.5rem; background: var(--sfondo-pannello); display: flex; flex-direction: column; align-items: center; }
+.statistiche { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 1rem; width: 100%; max-width: 560px; }
+.stat { background: var(--bianco); border-radius: var(--raggio); box-shadow: var(--ombra); padding: 1.25rem 1rem; text-align: center; display: flex; flex-direction: column; gap: 0.25rem; }
+.stat strong { font-size: 2rem; color: var(--verde-scuro); }
+.stat span { color: var(--testo-tenue); font-size: 0.85rem; }
+
+/* ============================================================
+   Telefono: una sola colonna. Con la classe "aperta" (chat o statistiche)
+   si nasconde la lista e compare il tasto indietro
+   ============================================================ */
+button.icona.solo-mobile { display: none; }
+@media (max-width: 700px) {
+  button.icona.solo-mobile { display: inline-flex; }
+  .sidebar { width: 100%; border-right: 0; }
+  .app .colonna { display: none; }
+  .app.aperta .sidebar { display: none; }
+  .app.aperta .colonna { display: flex; }
+  .bolla { max-width: 82%; }
+  .card { margin: 2rem 1rem; }
+  .statistiche { grid-template-columns: 1fr; }
+}

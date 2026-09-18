@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avviso from '../components/Avviso.jsx'
+import Icona from '../components/Icona.jsx'
 import { api, post } from '../services/api.js'
 import { salvaToken } from '../services/auth.js'
 
@@ -103,6 +104,7 @@ function Login({ onEntrato }) {
 
   return (
     <main className="card">
+      <div className="logo"><Icona nome="chat" dimensione={40} /><span>Chat</span></div>
       <h1>Accedi</h1>
       <div className="tabs">
         <button type="button" className={classeTab('password')} onClick={() => cambiaModo('password')}>Con password</button>

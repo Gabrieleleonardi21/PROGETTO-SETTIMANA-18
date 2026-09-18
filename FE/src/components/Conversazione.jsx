@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { post } from '../services/api.js'
 import { pubblica } from '../services/stompClient.js'
+import Avatar from './Avatar.jsx'
 import Avviso from './Avviso.jsx'
+import Icona from './Icona.jsx'
 
 /**
  * La conversazione aperta: lista dei messaggi e form di invio.
@@ -11,7 +13,7 @@ import Avviso from './Avviso.jsx'
  * Il bottone "Suggerisci" chiede all'IA un testo e lo mette nel campo: l'utente puo'
  * modificarlo o scartarlo, e nulla viene salvato finche' non preme Invia.
  */
-function Conversazione({ chat, messaggi, meId }) {
+function Conversazione({ chat, messaggi, meId, onIndietro }) {
   const [testo, setTesto] = useState('')
   const [erroreIa, setErroreIa] = useState('')
   const [inAttesaIa, setInAttesaIa] = useState(false)
@@ -50,7 +52,7 @@ function Conversazione({ chat, messaggi, meId }) {
   // Lo stato lo mostro solo sui miei: sui messaggi ricevuti non ha senso
   function stato(m) {
     if (m.mittenteId !== meId) return null
-    if (m.status === 'CONSEGNATO') return <span className="stato">✓✓</span>
+    if (m.status === 'CONSEGNATO') return <span className="stato consegnato">✓✓</span>
     return <span className="stato">✓</span>
   }
 
@@ -58,23 +60,37 @@ function Conversazione({ chat, messaggi, meId }) {
     return new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
   }
 
+  let classeSuggerisci = 'icona'
+  if (inAttesaIa) classeSuggerisci = 'icona pulsante'
+
+  let lista = <p className="nota">Nessun messaggio: scrivi tu il primo, o fatti aiutare dall'IA ✨</p>
+  if (messaggi.length > 0) {
+    lista = messaggi.map((m) => (
+      <li key={m.id} className={classeMessaggio(m)}>
+        <span className="testo">{m.testo}</span>
+        <small>{ora(m.sentAt)} {stato(m)}</small>
+      </li>
+    ))
+  }
+
   return (
     <>
-      <header className="intestazione">{chat.altro.username}</header>
+      <header className="intestazione">
+        <button type="button" className="icona solo-mobile" onClick={onIndietro} aria-label="Indietro"><Icona nome="indietro" /></button>
+        <Avatar nome={chat.altro.username} />
+        <strong>{chat.altro.username}</strong>
+      </header>
       <ul className="messaggi">
-        {messaggi.map((m) => (
-          <li key={m.id} className={classeMessaggio(m)}>
-            <span>{m.testo}</span>
-            <small>{ora(m.sentAt)} {stato(m)}</small>
-          </li>
-        ))}
+        {lista}
         <li ref={fondo} />
       </ul>
       <Avviso testo={erroreIa} />
       <form className="invio" onSubmit={invia}>
+        <button type="button" className={classeSuggerisci} onClick={suggerisci} disabled={inAttesaIa} title="Suggerisci con l'IA" aria-label="Suggerisci con l'IA">
+          <Icona nome="scintilla" />
+        </button>
         <input value={testo} onChange={(e) => setTesto(e.target.value)} placeholder="Scrivi un messaggio" autoFocus />
-        <button type="button" className="secondario" onClick={suggerisci} disabled={inAttesaIa}>Suggerisci</button>
-        <button type="submit">Invia</button>
+        <button type="submit" className="tondo" aria-label="Invia" disabled={!testo.trim()}><Icona nome="invia" dimensione={20} /></button>
       </form>
     </>
   )

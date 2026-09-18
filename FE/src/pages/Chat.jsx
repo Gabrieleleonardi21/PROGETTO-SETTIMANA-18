@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import Avatar from '../components/Avatar.jsx'
 import Avviso from '../components/Avviso.jsx'
 import Conversazione from '../components/Conversazione.jsx'
+import Icona from '../components/Icona.jsx'
 import Statistiche from '../components/Statistiche.jsx'
 import { api, patch, post } from '../services/api.js'
 import { ascolta } from '../services/stompClient.js'
@@ -68,36 +70,60 @@ function Chat({ utente, onEsci }) {
     }
   }
 
+  // Sul telefono si torna alla lista chiudendo la chat aperta
+  function chiudi() {
+    setChatAperta(null)
+    setMessaggi([])
+    setMostraStatistiche(false)
+  }
+
   function classeContatto(id) {
     if (chatAperta && chatAperta.altro.id === id) return 'contatto attivo'
     return 'contatto'
   }
 
-  let colonnaDestra = <p className="nota">Scegli una persona per iniziare a chattare</p>
+  let colonnaDestra = (
+    <div className="vuoto">
+      <Icona nome="chat" dimensione={64} />
+      <h2>La tua chat</h2>
+      <p>Scegli una persona dalla lista per iniziare a scrivere.</p>
+    </div>
+  )
   if (chatAperta) {
-    colonnaDestra = <Conversazione chat={chatAperta} messaggi={messaggi} meId={utente.id} />
+    colonnaDestra = <Conversazione chat={chatAperta} messaggi={messaggi} meId={utente.id} onIndietro={chiudi} />
   }
   if (mostraStatistiche) {
     colonnaDestra = <Statistiche onChiudi={() => setMostraStatistiche(false)} />
   }
 
+  // Sotto i 700px (vedi CSS) la classe "aperta" nasconde la lista e mostra la colonna destra
+  let classeApp = 'app'
+  if (chatAperta || mostraStatistiche) classeApp = 'app aperta'
+
+  let lista = <p className="nota">Nessun altro utente registrato, per ora.</p>
+  if (utenti.length > 0) {
+    lista = utenti.map((u) => (
+      <li key={u.id}>
+        <button type="button" className={classeContatto(u.id)} onClick={() => apri(u)}>
+          <Avatar nome={u.username} />
+          <span>{u.username}</span>
+        </button>
+      </li>
+    ))
+  }
+
   return (
-    <div className="app">
+    <div className={classeApp}>
       <aside className="sidebar">
         <header>
+          <Avatar nome={utente.username} />
           <strong>{utente.username}</strong>
           <div className="azioni">
-            <button type="button" className="secondario" onClick={() => setMostraStatistiche(true)}>Statistiche</button>
-            <button type="button" className="secondario" onClick={onEsci}>Esci</button>
+            <button type="button" className="icona" onClick={() => setMostraStatistiche(true)} title="Statistiche" aria-label="Statistiche"><Icona nome="statistiche" /></button>
+            <button type="button" className="icona" onClick={onEsci} title="Esci" aria-label="Esci"><Icona nome="esci" /></button>
           </div>
         </header>
-        <ul>
-          {utenti.map((u) => (
-            <li key={u.id}>
-              <button type="button" className={classeContatto(u.id)} onClick={() => apri(u)}>{u.username}</button>
-            </li>
-          ))}
-        </ul>
+        <ul>{lista}</ul>
         <Avviso testo={errore} />
       </aside>
       <main className="colonna">{colonnaDestra}</main>

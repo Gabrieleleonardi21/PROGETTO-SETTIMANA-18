@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avviso from '../components/Avviso.jsx'
+import Icona from '../components/Icona.jsx'
 import { post } from '../services/api.js'
 
 /** Form di registrazione: dopo l'invio l'account resta spento finche' non si apre il link nella mail. */
@@ -29,6 +30,7 @@ function Registrazione() {
   if (inviato) {
     return (
       <main className="card">
+        <div className="logo"><Icona nome="chat" dimensione={40} /><span>Chat</span></div>
         <h1>Controlla la tua email</h1>
         <p>Ti abbiamo inviato un link a <strong>{email}</strong>. Aprilo entro 24 ore per attivare l'account.</p>
         <p><Link to="/login">Vai al login</Link></p>
@@ -38,6 +40,7 @@ function Registrazione() {
 
   return (
     <main className="card">
+      <div className="logo"><Icona nome="chat" dimensione={40} /><span>Chat</span></div>
       <h1>Registrati</h1>
       <form onSubmit={invia}>
         <label>Username<input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} minLength={3} maxLength={30} required /></label>
