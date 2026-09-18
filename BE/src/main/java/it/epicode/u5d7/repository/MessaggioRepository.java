@@ -18,4 +18,9 @@ public interface MessaggioRepository extends JpaRepository<Messaggio, UUID> {
 	// I messaggi RICEVUTI da me in quella chat ancora SPEDITO: quelli inviati da me non li "consegno" io.
 	// Lettura e non UPDATE massivo: servono le entita' per rimandare al mittente lo stato aggiornato
 	List<Messaggio> findByChat_IdAndDestinatario_IdAndStatus(UUID chatId, UUID meId, StatoMessaggio status);
+
+	// Statistiche personali: messaggi inviati e ricevuti dall'utente
+	long countByMittente_Id(UUID mittenteId);
+
+	long countByDestinatario_Id(UUID destinatarioId);
 }

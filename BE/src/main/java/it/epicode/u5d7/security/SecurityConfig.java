@@ -21,7 +21,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 /**
  * Sicurezza stateless basata su JWT: niente sessione, niente CSRF, niente form
- * di login di Spring. Pubbliche solo registrazione/login e l'handshake WebSocket;
+ * di login di Spring. Pubbliche solo le rotte di registrazione/verifica/login e l'handshake WebSocket;
  * tutto il resto richiede un Bearer token valido.
  */
 @Configuration
@@ -52,7 +52,8 @@ public class SecurityConfig {
 						.accessDeniedHandler((req, res, e) -> exceptionResolver.resolveException(req, res, null, e)))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-						.requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+						.requestMatchers("/api/auth/register", "/api/auth/verify", "/api/auth/login",
+								"/api/auth/request-code", "/api/auth/login-code").permitAll()
 						// L'handshake WebSocket e' una GET del browser senza header Authorization:
 						// l'identita' viene data dopo, sul frame CONNECT (StompAuthInterceptor)
 						.requestMatchers("/ws/**").permitAll()

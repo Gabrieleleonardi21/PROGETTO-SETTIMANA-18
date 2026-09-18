@@ -32,3 +32,16 @@ input { font: inherit; padding: 0.5rem; border: 1px solid #bbb; border-radius: 6
 .stato { color: #34b7f1; }
 .invio { display: flex; gap: 0.5rem; padding: 0.75rem; background: #f0f0f0; }
 .invio input { flex: 1; }
+
+/* Tab del login (password / codice via email) */
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.tabs button { flex: 1; background: #eee; color: #222; }
+.tabs button.attivo { background: #128c7e; color: #fff; }
+
+/* Gruppo di bottoni affiancati (sidebar, statistiche) */
+.azioni { display: flex; gap: 0.5rem; }
+
+/* Riquadro statistiche: etichetta a sinistra, valore a destra */
+.statistiche { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem 1rem; margin: 1rem 0; }
+.statistiche dd { margin: 0; font-weight: bold; }
+.colonna .card { margin: 2rem auto; }

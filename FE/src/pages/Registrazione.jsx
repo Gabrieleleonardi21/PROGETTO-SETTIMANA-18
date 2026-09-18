@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Avviso from '../components/Avviso.jsx'
 import { post } from '../services/api.js'
 
+/** Form di registrazione: dopo l'invio l'account resta spento finche' non si apre il link nella mail. */
 function Registrazione() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errore, setErrore] = useState('')
+  const [inviato, setInviato] = useState(false)
   const [inCorso, setInCorso] = useState(false)
-  const naviga = useNavigate()
 
   async function invia(e) {
     e.preventDefault()
@@ -17,13 +18,22 @@ function Registrazione() {
     setInCorso(true)
     try {
       await post('/api/auth/register', { username, email, password })
-      // Registrazione riuscita: si passa dal login per ottenere il token
-      naviga('/login')
+      setInviato(true)
     } catch (err) {
       setErrore(err.message)
     } finally {
       setInCorso(false)
     }
+  }
+
+  if (inviato) {
+    return (
+      <main className="card">
+        <h1>Controlla la tua email</h1>
+        <p>Ti abbiamo inviato un link a <strong>{email}</strong>. Aprilo entro 24 ore per attivare l'account.</p>
+        <p><Link to="/login">Vai al login</Link></p>
+      </main>
+    )
   }
 
   return (

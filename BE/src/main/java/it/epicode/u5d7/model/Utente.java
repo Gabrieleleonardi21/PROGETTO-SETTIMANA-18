@@ -11,11 +11,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Utente registrato. "utenti" e non "user": user e' una parola riservata in Postgres. */
+/**
+ * Utente registrato. "utenti" e non "user": user e' una parola riservata in Postgres.
+ * Nasce con isActive = false e viene attivato solo aprendo il link di verifica ricevuto via email.
+ */
 @Entity
 @Table(name = "utenti")
 @Getter
@@ -41,6 +45,11 @@ public class Utente {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@Setter(AccessLevel.NONE)
 	private Instant createdAt;
+
+	// ColumnDefault: con ddl-auto=update la colonna si aggiunge anche se in tabella ci sono gia' righe
+	@Column(name = "is_active", nullable = false)
+	@ColumnDefault("false")
+	private boolean isActive = false;
 
 	protected Utente() {
 	}

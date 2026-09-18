@@ -12,7 +12,7 @@
 	<artifactId>u5d7</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>u5d7</name>
-	<description>Mini clone di WhatsApp: chat 1-a-1 con REST + WebSocket (STOMP) e login JWT</description>
+	<description>Mini clone di WhatsApp: chat 1-a-1 con REST + WebSocket (STOMP), auth via email, suggerimenti IA e statistiche via mail</description>
 	<properties>
 		<java.version>25</java.version>
 		<jjwt.version>0.13.0</jjwt.version>
@@ -38,6 +38,16 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+		<!-- Email via SMTP (Gmail): link di verifica, codice di login e statistiche -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+		<!-- Thymeleaf: usato SOLO per il template HTML dell'email con le statistiche, non per le pagine -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 
 		<!-- JJWT: creazione e verifica dei token JWT usati dopo il login -->

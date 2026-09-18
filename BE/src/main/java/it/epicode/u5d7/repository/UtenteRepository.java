@@ -16,6 +16,6 @@ public interface UtenteRepository extends JpaRepository<Utente, UUID> {
 
 	boolean existsByEmail(String email);
 
-	// "Le persone con cui puoi parlare": tutti tranne chi chiede
-	List<Utente> findByIdNotOrderByUsernameAsc(UUID id);
+	// "Le persone con cui puoi parlare": tutti tranne chi chiede, solo se hanno confermato l'email
+	List<Utente> findByIdNotAndIsActiveTrueOrderByUsernameAsc(UUID id);
 }

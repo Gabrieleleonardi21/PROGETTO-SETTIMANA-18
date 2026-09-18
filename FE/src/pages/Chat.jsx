@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Avviso from '../components/Avviso.jsx'
 import Conversazione from '../components/Conversazione.jsx'
+import Statistiche from '../components/Statistiche.jsx'
 import { api, patch, post } from '../services/api.js'
 import { ascolta } from '../services/stompClient.js'
 
@@ -23,6 +24,8 @@ function Chat({ utente, onEsci }) {
   const [chatAperta, setChatAperta] = useState(null)
   const [messaggi, setMessaggi] = useState([])
   const [errore, setErrore] = useState('')
+  // true = nella colonna destra si mostrano le statistiche al posto della conversazione
+  const [mostraStatistiche, setMostraStatistiche] = useState(false)
 
   // Le persone con cui posso parlare: tutti gli altri utenti registrati
   useEffect(() => {
@@ -59,6 +62,7 @@ function Chat({ utente, onEsci }) {
       // Svuoto prima di cambiare chat: la lista non deve mostrare per un istante i messaggi di quella precedente
       setMessaggi([])
       setChatAperta(chat)
+      setMostraStatistiche(false)
     } catch (e) {
       setErrore(e.message)
     }
@@ -73,13 +77,19 @@ function Chat({ utente, onEsci }) {
   if (chatAperta) {
     colonnaDestra = <Conversazione chat={chatAperta} messaggi={messaggi} meId={utente.id} />
   }
+  if (mostraStatistiche) {
+    colonnaDestra = <Statistiche onChiudi={() => setMostraStatistiche(false)} />
+  }
 
   return (
     <div className="app">
       <aside className="sidebar">
         <header>
           <strong>{utente.username}</strong>
-          <button type="button" className="secondario" onClick={onEsci}>Esci</button>
+          <div className="azioni">
+            <button type="button" className="secondario" onClick={() => setMostraStatistiche(true)}>Statistiche</button>
+            <button type="button" className="secondario" onClick={onEsci}>Esci</button>
+          </div>
         </header>
         <ul>
           {utenti.map((u) => (

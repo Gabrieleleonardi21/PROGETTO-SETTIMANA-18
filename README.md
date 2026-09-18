@@ -1,6 +1,8 @@
 # PROGETTO-SETTIMANA-18 – Mini clone di WhatsApp
 
 Chat 1-a-1 con Spring Boot (REST + WebSocket/STOMP, login JWT) e front-end React.
+Registrazione con conferma via email, login anche con codice via email, suggerimento IA del prossimo
+messaggio e statistiche personali spedite via email con un template Thymeleaf.
 
 ## Come funziona
 
@@ -14,6 +16,29 @@ Chat 1-a-1 con Spring Boot (REST + WebSocket/STOMP, login JWT) e front-end React
   e nell'ordine deciso dal server (`sent_at`).
 - Una sola chat per coppia di utenti: la coppia viene ordinata per id e c'è un vincolo `UNIQUE(part1_id, part2_id)`.
 
+### Auth via email (Gmail SMTP)
+
+- Alla registrazione l'utente nasce **non attivo** (`is_active = false`) e riceve un link
+  `FRONTEND_URL/verify?email=...&code=...` (token di 32 caratteri, valido 24 ore, monouso).
+  La pagina `/verify` del FE chiama `POST /api/auth/verify` e attiva l'account.
+- Login con password **oppure** con codice: `POST /api/auth/request-code` spedisce un codice a 6 cifre
+  (valido 10 minuti, monouso), `POST /api/auth/login-code` lo scambia con il JWT.
+- Se l'email non esiste o l'account non è attivo `request-code` risponde comunque 200: non si rivela chi è registrato.
+- Salvataggio e invio mail stanno nella stessa transazione: se l'SMTP fallisce, non resta nulla a DB.
+- Nella lista "persone con cui parlare" compaiono solo gli utenti che hanno confermato l'email.
+
+### Suggerimento IA
+
+- `POST /api/chat/{chatId}/suggerimento` manda a OpenRouter le regole in `BE/src/main/resources/agente/suggeritore.txt`
+  più la trascrizione degli ultimi N messaggi (`app.llm.max-messaggi-contesto`) e restituisce `{ testo }`.
+- Il suggerimento **non viene salvato**: il FE lo mette nel campo di scrittura e l'utente decide se inviarlo.
+
+### Statistiche
+
+- `GET /api/statistiche` → `{ messaggiInviati, messaggiRicevuti, chatAperte }` dell'utente loggato.
+- `POST /api/statistiche/email` le spedisce all'indirizzo di registrazione come email HTML generata dal
+  template Thymeleaf `BE/src/main/resources/templates/email/statistiche.html` (`th:text` fa l'escape dei valori).
+
 ## Avvio
 
 Back-end (porta 3001) – richiede PostgreSQL locale e il file `BE/env.properties` (non versionato):
@@ -21,7 +46,14 @@ Back-end (porta 3001) – richiede PostgreSQL locale e il file `BE/env.propertie
 ```properties
 DB_PASSWORD=...
 JWT_SECRET=una-stringa-di-almeno-32-caratteri
+# Gmail: indirizzo e app password (Google Account > Sicurezza > Password per le app)
+MAIL_USERNAME=tuo.indirizzo@gmail.com
+MAIL_PASSWORD=app-password-16-caratteri
+# OpenRouter, per il suggerimento IA
+OPENROUTER_API_KEY=...
 ```
+
+Se il DB esiste già da prima, gli utenti vecchi risultano non attivi: `UPDATE utenti SET is_active = true;`
 
 ```bash
 createdb u5d7
@@ -38,13 +70,19 @@ cd FE && npm install && npm run dev
 
 | Metodo | Path | Auth | Body / note |
 |---|---|---|---|
-| POST | `/api/auth/register` | no | `{ username, email, password }` → 201 |
-| POST | `/api/auth/login` | no | `{ email, password }` → `{ token }` |
+| POST | `/api/auth/register` | no | `{ username, email, password }` → 201, invia il link di verifica |
+| POST | `/api/auth/verify` | no | `{ email, codice }` → attiva l'account |
+| POST | `/api/auth/login` | no | `{ email, password }` → `{ token }` (solo account attivi) |
+| POST | `/api/auth/request-code` | no | `{ email }` → invia il codice a 6 cifre |
+| POST | `/api/auth/login-code` | no | `{ email, codice }` → `{ token }` |
 | POST | `/api/auth/logout` | sì | token in blacklist → 204 |
 | GET | `/api/utenti/me` | sì | utente loggato |
-| GET | `/api/utenti` | sì | tutti gli altri utenti |
+| GET | `/api/utenti` | sì | gli altri utenti attivi |
 | POST | `/api/chat` | sì | `{ destinatarioId }` → crea o restituisce la chat esistente |
 | GET | `/api/chat` | sì | chat dell'utente loggato |
+| POST | `/api/chat/{chatId}/suggerimento` | sì | `{ testo }` proposto dall'IA, non salvato |
+| GET | `/api/statistiche` | sì | `{ messaggiInviati, messaggiRicevuti, chatAperte }` |
+| POST | `/api/statistiche/email` | sì | spedisce le statistiche via email (Thymeleaf) |
 | POST | `/api/messaggi` | sì | `{ destinatarioId, testo }` → 201, poi push WS |
 | GET | `/api/chat/{chatId}/messaggi?page=0&size=50` | sì | cronologia, pagina 0 = più recenti |
 | PATCH | `/api/chat/{chatId}/messaggi/consegnati` | sì | i miei messaggi ricevuti `SPEDITO` → `CONSEGNATO`; il mittente riceve lo stato aggiornato via WS |

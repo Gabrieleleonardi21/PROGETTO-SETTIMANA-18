@@ -4,6 +4,7 @@ import RottaProtetta from './components/RottaProtetta.jsx'
 import Chat from './pages/Chat.jsx'
 import Login from './pages/Login.jsx'
 import Registrazione from './pages/Registrazione.jsx'
+import Verifica from './pages/Verifica.jsx'
 import { api, post } from './services/api.js'
 import { cancellaToken, leggiToken, salvaToken } from './services/auth.js'
 import { attiva, disattiva } from './services/stompClient.js'
@@ -71,6 +72,8 @@ function App() {
     <Routes>
       <Route path="/login" element={paginaLogin} />
       <Route path="/register" element={paginaRegistrazione} />
+      {/* Aperta dal link della mail di conferma: pubblica, non serve essere loggati */}
+      <Route path="/verify" element={<Verifica />} />
       <Route element={<RottaProtetta utente={utente} />}>
         <Route path="/" element={<Chat utente={utente} onEsci={esci} />} />
       </Route>

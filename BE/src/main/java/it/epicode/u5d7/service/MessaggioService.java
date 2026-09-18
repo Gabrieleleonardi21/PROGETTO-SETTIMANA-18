@@ -1,6 +1,8 @@
 package it.epicode.u5d7.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,6 +76,19 @@ public class MessaggioService {
 		chatService.diPartecipante(chatId, meId);
 		Pageable pageable = PageRequest.of(page, size, Sort.by("sentAt").descending());
 		return messaggioRepository.findByChat_Id(chatId, pageable).map(MessaggioResponse::da);
+	}
+
+	/**
+	 * Ultimi N messaggi della chat in ordine cronologico, come righe "username: testo".
+	 * Serve da contesto per il suggerimento dell'IA; lo username viene letto qui, dentro la transazione.
+	 */
+	@Transactional(readOnly = true)
+	public List<String> trascrizione(UUID chatId, UUID meId, int quanti) {
+		chatService.diPartecipante(chatId, meId);
+		Pageable pageable = PageRequest.of(0, quanti, Sort.by("sentAt").descending());
+		List<Messaggio> recenti = new ArrayList<>(messaggioRepository.findByChat_Id(chatId, pageable).getContent());
+		Collections.reverse(recenti);
+		return recenti.stream().map(m -> m.getMittente().getUsername() + ": " + m.getTesto()).toList();
 	}
 
 	/**
