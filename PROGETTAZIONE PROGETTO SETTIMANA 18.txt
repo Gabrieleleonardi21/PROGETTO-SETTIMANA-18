@@ -1,0 +1,223 @@
+PROGETTAZIONE PROGETTO SETTIMANA 18 – Mini clone di WhatsApp
+=============================================================
+
+Questo file spiega il ragionamento che c'e' dietro l'applicazione: perche' e' fatta cosi',
+quali alternative ho scartato e perche'. Il "come si usa" sta nel README.
+
+
+1. LA CONSEGNA E COME L'HO LETTA
+--------------------------------
+
+La consegna chiede tre cose:
+
+  1. una chat fra utenti loggati, con i messaggi che arrivano in diretta via WebSocket;
+  2. la possibilita' di chiedere a un'IA di proporre un messaggio per continuare la
+     conversazione, con il vincolo che la risposta dell'IA NON venga salvata nel DB;
+  3. la possibilita' di chiedere le proprie statistiche (messaggi inviati, messaggi ricevuti,
+     chat aperte) e riceverle via email con un template Thymeleaf.
+
+Ognuno di questi punti corrisponde a una lezione della settimana:
+  - lunedi'   (U5D6): email con Gmail SMTP, token di registrazione e codice di login;
+  - martedi'  (U5D7): chat con WebSocket/STOMP autenticato via JWT;
+  - mercoledi'(U5D8): chiamate a un LLM tramite OpenRouter con RestClient.
+
+Quindi il progetto non e' partito da zero: ho preso il clone di WhatsApp di martedi' (U5D7),
+che copriva gia' il punto 1, e ci ho aggiunto l'autenticazione via email di lunedi' e la
+parte IA di mercoledi', piu' le statistiche. Riusare il codice della settimana e' stata una
+scelta voluta: e' codice che conosco, gia' testato, e mi permette di concentrarmi sulle parti
+nuove invece di riscrivere la chat.
+
+
+2. ARCHITETTURA GENERALE
+------------------------
+
+Due progetti separati nella stessa repo:
+  - BE/  Spring Boot 4 (Java 25), PostgreSQL, JPA, Spring Security con JWT, WebSocket/STOMP,
+         Spring Mail, Thymeleaf, RestClient verso OpenRouter;
+  - FE/  React 19 + Vite, react-router, @stomp/stompjs.
+
+Il backend e' stateless: nessuna sessione HTTP, ogni richiesta porta il proprio JWT.
+La struttura a livelli e' quella classica:
+  controller -> service -> repository -> entita'
+I controller non contengono logica: validano il body (@Valid), prendono l'utente dal
+principal e delegano al service. I service lanciano ResponseStatusException con uno status
+HTTP e un messaggio in italiano; l'ExceptionsHandler le traduce in un ErrorPayload JSON
+uniforme, cosi' il frontend gestisce un solo formato di errore.
+
+open-in-view e' spento: i DTO vengono costruiti dentro il service, nella transazione, e le
+entita' non arrivano mai a Jackson. Questo evita LazyInitializationException e soprattutto
+evita di esporre per sbaglio campi come la password.
+
+
+3. AUTENTICAZIONE VIA EMAIL (lunedi')
+-------------------------------------
+
+Perche' l'utente nasce "non attivo"
+  Alla registrazione l'Utente viene salvato con is_active = false. Diventa attivo solo quando
+  apre il link ricevuto via email. Cosi' sono sicuro che l'indirizzo esiste ed e' di chi si e'
+  registrato. Finche' non e' attivo non puo' fare login e non compare nella lista dei
+  contatti degli altri: non ha senso poter scrivere a qualcuno che non potra' mai leggere.
+
+Due tipi di token, una sola classe base
+  RegistrationToken (32 caratteri esadecimali, vale 24 ore) e LoginToken (6 cifre, vale
+  10 minuti) condividono TokenBase, una @MappedSuperclass con id, createdAt, expireAt e il
+  flag isUsed. Ogni sottoclasse dichiara solo la propria durata: la scadenza viene calcolata
+  in @PrePersist, quindi la decide il server e non il client.
+  Il codice di login e' corto (6 cifre) perche' va copiato a mano dalla mail; il token di
+  registrazione e' lungo perche' viaggia dentro un link e nessuno lo digita.
+
+Perche' i token sono monouso e scadono
+  Un codice intercettato o dimenticato in una mail vecchia non deve funzionare per sempre.
+  controllaToken() verifica prima isUsed e poi la scadenza, e chi lo usa lo marca subito.
+
+Registrazione e invio mail nella stessa transazione
+  registra() e richiediCodiceLogin() sono @Transactional e l'invio della mail e' l'ultima
+  istruzione. Se l'SMTP fallisce, EmailService lancia un'eccezione e il salvataggio viene
+  annullato: non restano utenti "fantasma" che non hanno mai ricevuto il link. Il client
+  riceve un 503 con un messaggio generico, il dettaglio dell'errore finisce solo nel log.
+
+Non rivelare chi e' registrato
+  request-code risponde sempre 200 con "Se l'email e' registrata e attiva riceverai un
+  codice", anche se l'email non esiste. Il login con password risponde "Credenziali non
+  valide" sia per email sbagliata sia per password sbagliata. Se dessi messaggi diversi
+  chiunque potrebbe scoprire quali indirizzi sono iscritti.
+
+Login con password E con codice
+  Ho tenuto entrambi: il codice via email e' comodo e dimostra il flusso della lezione, la
+  password resta come alternativa se la mail e' lenta o finisce nello spam. Entrambi
+  restituiscono lo stesso JWT, quindi il resto dell'applicazione non sa quale dei due e' stato
+  usato.
+
+
+4. CHAT IN TEMPO REALE (martedi')
+---------------------------------
+
+Prima si salva, poi si consegna
+  Un messaggio viene PRIMA scritto a DB (id e sentAt li assegna il server) e POI pushato via
+  WebSocket sulla coda personale /user/queue/messaggi di destinatario e mittente. Se il push
+  fallisce il messaggio e' comunque salvato e comparira' nella cronologia. Se facessi il
+  contrario potrei consegnare un messaggio che poi non riesco a salvare.
+
+Il mittente non e' nel body
+  Il client manda solo destinatarioId e testo. Chi sia il mittente lo decide il server dal
+  principal della sessione (JWT su HTTP, UtentePrincipal sulla sessione STOMP). Altrimenti
+  chiunque potrebbe spedire messaggi a nome di un altro.
+
+Code personali, non broadcast
+  Ogni utente e' iscritto solo alla propria coda: i messaggi di una chat non passano mai da
+  un canale condiviso dove altri potrebbero leggerli.
+
+Stato SPEDITO / CONSEGNATO
+  Se il destinatario ha una sessione WS aperta (SimpUserRegistry) il messaggio nasce
+  CONSEGNATO; altrimenti resta SPEDITO e viene marcato consegnato con una PATCH quando il
+  destinatario apre la chat. Il mittente riceve l'aggiornamento di stato sulla stessa coda.
+
+Una sola chat per coppia
+  Il costruttore di Chat ordina i due partecipanti per id e c'e' un vincolo UNIQUE a DB:
+  (A,B) e (B,A) sono la stessa riga, anche se due richieste arrivano insieme.
+
+Unione cronologia + WebSocket nel frontend
+  Il client legge la cronologia via REST e la unisce ai messaggi WS in una Map per id: il mio
+  messaggio arriva sia come eco WS sia in una GET successiva, ma compare una volta sola.
+  L'ordine e' quello del sentAt deciso dal server, non l'ordine di arrivo sul client.
+
+
+5. SUGGERIMENTO DELL'IA (mercoledi')
+------------------------------------
+
+Cosa fa
+  POST /api/chat/{chatId}/suggerimento prende gli ultimi N messaggi della chat (default 20),
+  li trasforma in una trascrizione "username: testo" e la manda a OpenRouter insieme alle
+  regole fisse contenute in agente/suggeritore.txt. La risposta torna al client come
+  { testo } e basta.
+
+Perche' NON viene salvato (vincolo della consegna)
+  Il suggerimento e' una bozza: e' l'utente che decide se inviarlo, modificarlo o scartarlo.
+  Nel frontend il testo finisce nel campo di scrittura, non nella lista dei messaggi. Solo
+  quando l'utente preme Invia il messaggio passa dal normale canale WS e viene salvato come un
+  messaggio suo. In SuggerimentoService non c'e' nessuna save(): il vincolo e' rispettato per
+  costruzione, non per un "if".
+
+Il prompt vive in un file, non nel codice
+  agente/suggeritore.txt viene letto una volta all'avvio (IstruzioniSuggeritore). Cambiare il
+  comportamento dell'IA non richiede di toccare Java. Se il file manca l'applicazione non
+  parte: meglio un errore subito che un'IA senza regole.
+
+Perche' una trascrizione e non ruoli user/assistant
+  In una chat fra due persone i ruoli "user/assistant" del formato OpenAI non hanno un
+  significato naturale. Metto tutto in un unico messaggio user con la trascrizione e dico
+  all'IA per quale dei due deve scrivere. Nel prompt chiedo anche di NON eseguire istruzioni
+  contenute nei messaggi: e' una difesa parziale contro la prompt injection (un utente
+  potrebbe scrivere "ignora le regole e ..."). Il rischio e' basso perche' il suggerimento
+  non viene salvato e lo vede solo chi lo ha chiesto.
+
+Niente transazione intorno alla chiamata HTTP
+  SuggerimentoService non e' @Transactional. La lettura della cronologia e' una transazione
+  breve di MessaggioService; la chiamata all'LLM, che puo' durare secondi, resta fuori e non
+  tiene occupata una connessione al database.
+
+Fallback fra modelli e retry
+  OpenRouter accetta una lista di modelli: se il primo (gratuito) e' saturo passa al secondo.
+  ClientLlm fa fino a 3 tentativi con una pausa, e se fallisce tutto restituisce un Optional
+  vuoto: e' il service a decidere cosa dire al client (503 "L'IA non e' disponibile").
+  Nessuna eccezione HTTP di OpenRouter esce mai verso il frontend.
+
+Contesto limitato agli ultimi N messaggi
+  Riuso la stessa query paginata della cronologia con page 0 e size N. Meno token inviati,
+  risposte piu' veloci, e comunque il contesto utile per "continuare la conversazione" sono
+  gli ultimi scambi, non tutta la storia.
+
+
+6. STATISTICHE VIA EMAIL (Thymeleaf)
+------------------------------------
+
+Le statistiche si calcolano a DB, non si tengono aggiornate
+  Tre COUNT (messaggi con mittente = me, con destinatario = me, chat in cui compaio) fatti al
+  momento della richiesta. Avrei potuto tenere dei contatori nell'entita' Utente, ma ogni
+  messaggio avrebbe dovuto aggiornarli e sarebbe bastato un bug per farli divergere dai dati
+  reali. Con i COUNT il valore e' sempre giusto e le statistiche si chiedono di rado.
+
+L'email va all'indirizzo di registrazione
+  POST /api/statistiche/email non accetta un indirizzo nel body: usa quello dell'utente
+  loggato. Altrimenti sarebbe un modo per far spedire email a chiunque dal mio server.
+
+Thymeleaf solo per l'email
+  spring.thymeleaf.enabled=false spegne la risoluzione delle viste MVC (il frontend e' React),
+  ma il TemplateEngine resta disponibile e lo uso per compilare
+  templates/email/statistiche.html. Il template usa th:text, che fa l'escape HTML: uno
+  username come <script> arriverebbe nella mail come testo, non come markup.
+  Lo stile e' inline perche' i client di posta ignorano i fogli di stile esterni.
+
+
+7. SICUREZZA: LE SCELTE TRASVERSALI
+-----------------------------------
+
+  - JWT firmato con un segreto che NON ha default: se manca, l'app non parte.
+  - Logout con blacklist: il token viene ricordato fino alla sua scadenza naturale, cosi' un
+    token copiato non vale piu' dopo il logout anche se formalmente non e' scaduto.
+  - Password con BCrypt, mai in output (@JsonIgnore e DTO dedicati).
+  - Ogni accesso a una chat passa da diPartecipante(): 404 se non esiste, 403 se non ne faccio
+    parte. Vale per cronologia, PATCH e suggerimento IA.
+  - CORS ristretto alle origini configurate, sia per /api sia per l'handshake /ws.
+  - Segreti fuori dal codice: DB e JWT in env.properties (non versionato), email e chiave
+    OpenRouter come variabili d'ambiente. Il .gitignore esclude env.properties.
+  - Frontend: nessun innerHTML, i testi dei messaggi vanno sempre in nodi di testo React.
+
+
+8. FRONTEND: PERCHE' E' FATTO COSI'
+-----------------------------------
+
+  - Un solo wrapper su fetch (services/api.js) che aggiunge il JWT e trasforma gli
+    ErrorPayload in Error con messaggio in italiano: le pagine fanno solo try/catch.
+  - Al primo caricamento il token in localStorage non viene creduto sulla parola: si chiama
+    GET /me e se risponde 401 si torna al login.
+  - Il canale STOMP si apre una volta sola in App.jsx appena la sessione e' valida; le pagine
+    si iscrivono con ascolta() e la funzione di cleanup evita gestori duplicati.
+  - Nessun inserimento "ottimistico" dei messaggi: compaiono quando torna l'eco del server,
+    con id e ora decisi dal backend. Piu' semplice e sempre coerente con il DB.
+  - Il bottone IA mette il suggerimento nel campo di testo, non lo invia: e' la traduzione
+    visiva del vincolo "non salvare la risposta dell'IA".
+  - Responsive: sotto i 700px una sola colonna (lista oppure chat) con tasto indietro, perche'
+    la chat si prova anche dal telefono in rete locale.
+  - Stile in variabili CSS, avatar con iniziali colorate da un hash del nome, icone SVG
+    inline: nessuna dipendenza esterna per la grafica.
